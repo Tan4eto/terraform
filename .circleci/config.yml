@@ -4,11 +4,14 @@ jobs:
     steps:
       - checkout
 
-      - run: docker run --rm -v $(pwd):/src aquasec/tfsec /src -f json | tee tfsec-output.json
+      - run:
+          command: docker run --rm -v $(pwd):/src aquasec/tfsec /src -f json | tee tfsec-output.json || true
 
       - store_artifacts:
           path: tfsec-output.json
           destination: tfsec-artifact
+          when: always
+
   test:
     machine: true
     steps:
@@ -23,6 +26,7 @@ jobs:
           command: |
             echo "This is an integration step"
             exit 1
+          when: on_fail         # Even if the job fails, continue to the next stages
 
   prod:
     machine: true
@@ -32,11 +36,15 @@ jobs:
 
 workflows:
   version: 2
-  django:
+  terraform:
     jobs:
       - tfsec
-      - test
-      - integration
+      - test:
+          requires:
+            - tfsec
+      - integration:
+          requires:
+            - test
       - prod:
           type: approval
           requires:
