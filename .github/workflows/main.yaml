@@ -23,7 +23,7 @@ jobs:
           iac_dir: 'aws'
   test:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: terrascan
     steps:
       - run: echo "This is a test step"
 
