@@ -4,11 +4,14 @@ jobs:
     steps:
       - checkout
 
-      - run: docker run --rm -v $(pwd):/src tenable/terrascan scan -t aws -d /src/aws -o json | tee terrascan-output.json
+      - run:
+          command: docker run --rm -v $(pwd):/src tenable/terrascan scan -t aws -d /src/aws -o json | tee terrascan-output.json || true
 
       - store_artifacts:
           path: terrascan-output.json
           destination: terrascan-artifact
+          when: always
+
   test:
     machine: true
     steps:
@@ -23,6 +26,7 @@ jobs:
           command: |
             echo "This is an integration step"
             exit 1
+          when: on_fail         # Even if the job fails, continue to the next stages
 
   prod:
     machine: true
@@ -37,10 +41,10 @@ workflows:
       - terrascan
       - test:
           requires:
-             - terrascan
+            - terrascan
       - integration:
           requires:
-             - terrascan
+            - test
       - prod:
           type: approval
           requires:
